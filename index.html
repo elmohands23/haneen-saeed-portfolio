@@ -51,7 +51,7 @@
     <div class="music-copy"><strong>مكاني الصح — تامر عاشور</strong><small id="music-status">اضغطي لتشغيل الموسيقى</small></div>
     <label aria-label="مستوى الصوت">🔉 <input id="music-volume" type="range" min="0" max="100" value="32" /></label>
   </div>
-  <audio id="bg-music" autoplay preload="auto" loop playsinline src="music.mp3"></audio>
+  <audio id="bg-music" preload="none" loop src="music.mp3"></audio>
   <script>
     document.getElementById('year').textContent = new Date().getFullYear();
     const menu=document.getElementById('menu'), nav=document.getElementById('navlinks');
@@ -61,32 +61,20 @@
     const musicButton = document.getElementById('music-toggle');
     const music = document.getElementById('bg-music');
     const status = document.getElementById('music-status');
-    let manuallyPaused = false;
     music.volume = 0.32;
-    function updateMusic() {
+    const updateMusic = () => {
       musicButton.textContent = music.paused ? '▶' : '❚❚';
-      status.textContent = music.paused ? 'اضغطي ▶ لتشغيل الأغنية' : 'الموسيقى شغالة ♪';
-    }
-    async function tryAutoplay() {
-      if (manuallyPaused || !music.paused) return;
-      try { await music.play(); updateMusic(); }
-      catch (error) { status.textContent = 'المتصفح منع التشغيل التلقائي — اضغطي ▶'; }
-    }
-    musicButton.addEventListener('click', async (event) => {
-      event.stopPropagation();
-      if (music.paused) { manuallyPaused = false; await tryAutoplay(); }
-      else { manuallyPaused = true; music.pause(); updateMusic(); }
+      status.textContent = music.paused ? 'اضغطي لتشغيل الموسيقى' : 'الموسيقى شغالة ♪';
+    };
+    musicButton.addEventListener('click', async () => {
+      try { if (music.paused) await music.play(); else music.pause(); }
+      catch (err) { status.textContent = 'اضغطي مرة تانية للتشغيل'; }
+      updateMusic();
     });
     document.getElementById('music-volume').addEventListener('input', e => {music.volume = Number(e.target.value)/100;});
-    music.addEventListener('play', updateMusic);
-    music.addEventListener('pause', updateMusic);
-    // شغّل تلقائيًا فور الدخول إن سمحت سياسة المتصفح.
-    window.addEventListener('load', tryAutoplay, {once:true});
-    tryAutoplay();
-    // في حالة حظر الصوت، أول تفاعل فعلي يتيح محاولة التشغيل.
-    ['pointerdown','keydown','touchstart'].forEach(eventName => {
-      document.addEventListener(eventName, () => {if (!manuallyPaused) tryAutoplay();}, {once:true, capture:true});
-    });
+    music.addEventListener('ended', updateMusic);
+    // المتصفحات تمنع عادة التشغيل التلقائي بصوت؛ لذلك لا يتم تجاوز اختيار الزائر.
+    updateMusic();
   </script>
 </body>
 </html>
